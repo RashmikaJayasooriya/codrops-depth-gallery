@@ -176,13 +176,16 @@ const galleryPlaneData = portfolioProjects.map((project, index) => {
     fallbackColor: '#ffffff',
     accentColor: mixHex(backgroundColor, '#ffffff', 0.45),
     textureSrc: `/api/image?path=${encodeURIComponent(project.image)}`,
+    projectUrl: project.url,
     position: { x: xPattern[index % xPattern.length], y: 0 },
     backgroundColor,
     blob1Color: mixHex(backgroundColor, '#ffffff', 0.2),
     blob2Color: mixHex(backgroundColor, '#000000', 0.15),
     label: {
-      word: project.title,
-      pms: project.id,
+      title: project.title,
+      description: project.description,
+      url: project.url,
+      cta: 'Visit Website',
       color: getContrastText(backgroundColor),
     },
   }

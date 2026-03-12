@@ -13,7 +13,7 @@ class Gallery {
     this.useTextures = true
     this.planeGap = 5
     this.desktopPlaneScale = 1
-    this.mobilePlaneScale = 0.65
+    this.mobilePlaneScale = 0.56
     this.mobileXSpreadFactor = 0.25
     this.mobileBreakpoint = 768
     this.planeConfig = galleryPlaneData
@@ -28,6 +28,14 @@ class Gallery {
     this.parallaxSmoothing = 0.08
     this.pointerTarget = new THREE.Vector2(0, 0)
     this.pointerCurrent = new THREE.Vector2(0, 0)
+    this.pointerClient = new THREE.Vector2(0, 0)
+    this.isPointerActive = false
+
+    // Interaction
+    this.raycaster = new THREE.Raycaster()
+    this.hoveredPlane = null
+    this.hoverTooltipElement = null
+    this.lastCamera = null
 
     // Breath
     this.breathEnabled = true
@@ -47,12 +55,35 @@ class Gallery {
 
     // Pointer events
     this.onPointerMove = (event) => {
+      this.isPointerActive = true
       const x = (event.clientX / window.innerWidth) * 2 - 1
       const y = (event.clientY / window.innerHeight) * 2 - 1
       this.pointerTarget.set(x, -y)
+      this.pointerClient.set(event.clientX, event.clientY)
+      this.updateHoverTooltipPosition()
     }
     this.onPointerLeave = () => {
+      this.isPointerActive = false
       this.pointerTarget.set(0, 0)
+      this.hoveredPlane = null
+      this.setHoverTooltipVisible(false)
+      this.setPointerCursor(false)
+    }
+    this.onPointerDown = (event) => {
+      if (!(event.target instanceof HTMLCanvasElement)) return
+      if (!this.lastCamera) return
+
+      this.isPointerActive = true
+      const x = (event.clientX / window.innerWidth) * 2 - 1
+      const y = (event.clientY / window.innerHeight) * 2 - 1
+      this.pointerTarget.set(x, -y)
+      this.pointerClient.set(event.clientX, event.clientY)
+      this.updateInteraction(this.lastCamera)
+
+      const projectUrl = this.hoveredPlane?.userData?.projectUrl
+      if (!projectUrl) return
+
+      window.open(projectUrl, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -101,6 +132,7 @@ class Gallery {
       planeMesh.userData.blob1Color = blob1Color
       planeMesh.userData.blob2Color = blob2Color
       planeMesh.userData.label = labelData
+      planeMesh.userData.projectUrl = plane.projectUrl || labelData.url
       planeMesh.userData.texture = texture
       planeMesh.userData.aspectRatio = aspectRatio
       scene.add(planeMesh)
@@ -110,15 +142,19 @@ class Gallery {
 
   getPlaneLabelData(planeDefinition, index) {
     const fallback = {
-      word: `tone ${String(index + 1).padStart(2, '0')}`,
-      pms: 'N/A',
+      title: `Project ${String(index + 1).padStart(2, '0')}`,
+      description: 'Creative web experience.',
+      url: '',
+      cta: 'Visit Website',
       color: '',
     }
     const label = planeDefinition.label || fallback
 
     return {
-      word: label.word || fallback.word,
-      pms: label.pms || fallback.pms,
+      title: label.title || fallback.title,
+      description: label.description || fallback.description,
+      url: label.url || planeDefinition.projectUrl || fallback.url,
+      cta: label.cta || fallback.cta,
       color: label.color || fallback.color,
     }
   }
@@ -438,13 +474,81 @@ class Gallery {
   bindPointerEvents() {
     window.addEventListener('pointermove', this.onPointerMove, { passive: true })
     window.addEventListener('pointerleave', this.onPointerLeave, { passive: true })
+    window.addEventListener('pointerdown', this.onPointerDown, { passive: true })
+    this.createHoverTooltip()
+  }
+
+  createHoverTooltip() {
+    if (this.hoverTooltipElement) return
+
+    const tooltip = document.createElement('div')
+    tooltip.className = 'plane-hover-cta'
+    tooltip.textContent = 'Visit Website'
+    tooltip.style.opacity = '0'
+    document.body.append(tooltip)
+    this.hoverTooltipElement = tooltip
+  }
+
+  setHoverTooltipVisible(isVisible, text = 'Visit Website') {
+    if (!this.hoverTooltipElement) return
+    this.hoverTooltipElement.textContent = text
+    this.hoverTooltipElement.style.opacity = isVisible ? '1' : '0'
+  }
+
+  updateHoverTooltipPosition() {
+    if (!this.hoverTooltipElement) return
+
+    const offsetX = 16
+    const offsetY = -18
+    const maxX = window.innerWidth - this.hoverTooltipElement.offsetWidth - 8
+    const minY = 8
+
+    const x = Math.min(this.pointerClient.x + offsetX, Math.max(maxX, 8))
+    const y = Math.max(this.pointerClient.y + offsetY, minY)
+
+    this.hoverTooltipElement.style.left = `${x}px`
+    this.hoverTooltipElement.style.top = `${y}px`
+  }
+
+  setPointerCursor(shouldUsePointer) {
+    document.body.style.cursor = shouldUsePointer ? 'pointer' : ''
+  }
+
+  updateInteraction(camera = null) {
+    if (!camera || !this.planes.length || !this.isPointerActive) {
+      this.hoveredPlane = null
+      this.setPointerCursor(false)
+      this.setHoverTooltipVisible(false)
+      return
+    }
+
+    this.raycaster.setFromCamera(this.pointerTarget, camera)
+    const intersections = this.raycaster.intersectObjects(this.planes, false)
+    const hoveredIntersection = intersections.find((intersection) => {
+      const opacity = intersection.object?.material?.opacity ?? 0
+      return opacity > 0.2
+    })
+
+    const nextHoveredPlane = hoveredIntersection?.object || null
+    this.hoveredPlane = nextHoveredPlane
+
+    if (!nextHoveredPlane) {
+      this.setPointerCursor(false)
+      this.setHoverTooltipVisible(false)
+      return
+    }
+
+    const ctaText = nextHoveredPlane.userData?.label?.cta || 'Visit Website'
+    this.setPointerCursor(true)
+    this.updateHoverTooltipPosition()
+    this.setHoverTooltipVisible(true, ctaText)
   }
 
   updatePlaneMotion(scroll = null) {
     // Smooth pointer toward target
     this.pointerCurrent.lerp(this.pointerTarget, this.parallaxSmoothing)
 
-    // Velocity → breath + drift
+    // Velocity to breath and drift
     const velocityMax = Math.max(scroll?.velocityMax || 1, 0.0001)
     const velocityNormalized = THREE.MathUtils.clamp(
       Math.abs(scroll?.velocity || 0) / velocityMax,
@@ -506,13 +610,22 @@ class Gallery {
 
   update(camera = null, scroll = null) {
     if (!camera) return
+    this.lastCamera = camera
     this.updatePlaneVisibility(camera.position.z)
     this.updatePlaneMotion(scroll)
+    this.updateInteraction(camera)
   }
 
   dispose() {
     window.removeEventListener('pointermove', this.onPointerMove)
     window.removeEventListener('pointerleave', this.onPointerLeave)
+    window.removeEventListener('pointerdown', this.onPointerDown)
+
+    this.hoverTooltipElement?.remove()
+    this.hoverTooltipElement = null
+    this.setPointerCursor(false)
+    this.hoveredPlane = null
+    this.lastCamera = null
   }
 }
 

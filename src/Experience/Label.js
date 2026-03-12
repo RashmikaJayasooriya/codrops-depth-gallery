@@ -3,56 +3,41 @@ class Label {
     this.gallery = gallery
 
     this.overlayElement = null
-    this.leftIndexElement = null
-    this.wordElement = null
-    this.chipElement = null
-    this.cmykValueElement = null
-    this.rgbValueElement = null
-    this.hexValueElement = null
-    this.pmsValueElement = null
+    this.ghostIndexElement = null
+    this.indexElement = null
+    this.titleElement = null
+    this.descriptionElement = null
+    this.domainElement = null
+    this.ctaElement = null
     this.activePlaneIndex = -1
   }
 
   createElement() {
     const element = document.createElement('section')
-    element.className = 'plane-label-overlay'
+    element.className = 'project-overlay'
     element.innerHTML = `
-      <div class="plane-label-overlay__left">
-        <p class="plane-label-overlay__index"></p>
-        <p class="plane-label-card__word"></p>
-        <span class="plane-label-overlay__chip"></span>
-      </div>
-      <article class="plane-label-card plane-label-overlay__right">
-        <dl class="plane-label-card__specs">
-          <div class="plane-label-card__row">
-            <dt>CMYK</dt>
-            <dd class="plane-label-card__value plane-label-card__value--cmyk"></dd>
-          </div>
-          <div class="plane-label-card__row">
-            <dt>RGB</dt>
-            <dd class="plane-label-card__value plane-label-card__value--rgb"></dd>
-          </div>
-          <div class="plane-label-card__row">
-            <dt>HEX</dt>
-            <dd class="plane-label-card__value plane-label-card__value--hex"></dd>
-          </div>
-          <div class="plane-label-card__row">
-            <dt>PMS</dt>
-            <dd class="plane-label-card__value plane-label-card__value--pms"></dd>
-          </div>
-        </dl>
+      <article class="project-panel">
+        <p class="project-panel__ghost-index"></p>
+        <div class="project-panel__lead">
+          <p class="project-panel__domain"></p>
+          <h2 class="project-panel__title"></h2>
+          <p class="project-panel__description"></p>
+        </div>
+        <div class="project-panel__aside">
+          <p class="project-panel__index"></p>
+          <p class="project-panel__cta">Visit Website</p>
+        </div>
       </article>
     `
 
     return {
       element,
-      leftIndexElement: element.querySelector('.plane-label-overlay__index'),
-      wordElement: element.querySelector('.plane-label-card__word'),
-      chipElement: element.querySelector('.plane-label-overlay__chip'),
-      cmykValueElement: element.querySelector('.plane-label-card__value--cmyk'),
-      rgbValueElement: element.querySelector('.plane-label-card__value--rgb'),
-      hexValueElement: element.querySelector('.plane-label-card__value--hex'),
-      pmsValueElement: element.querySelector('.plane-label-card__value--pms'),
+      ghostIndexElement: element.querySelector('.project-panel__ghost-index'),
+      indexElement: element.querySelector('.project-panel__index'),
+      titleElement: element.querySelector('.project-panel__title'),
+      descriptionElement: element.querySelector('.project-panel__description'),
+      domainElement: element.querySelector('.project-panel__domain'),
+      ctaElement: element.querySelector('.project-panel__cta'),
     }
   }
 
@@ -61,96 +46,34 @@ class Label {
 
     const {
       element,
-      leftIndexElement,
-      wordElement,
-      chipElement,
-      cmykValueElement,
-      rgbValueElement,
-      hexValueElement,
-      pmsValueElement,
+      ghostIndexElement,
+      indexElement,
+      titleElement,
+      descriptionElement,
+      domainElement,
+      ctaElement,
     } = this.createElement()
 
     this.overlayElement = element
-    this.leftIndexElement = leftIndexElement
-    this.wordElement = wordElement
-    this.chipElement = chipElement
-    this.cmykValueElement = cmykValueElement
-    this.rgbValueElement = rgbValueElement
-    this.hexValueElement = hexValueElement
-    this.pmsValueElement = pmsValueElement
+    this.ghostIndexElement = ghostIndexElement
+    this.indexElement = indexElement
+    this.titleElement = titleElement
+    this.descriptionElement = descriptionElement
+    this.domainElement = domainElement
+    this.ctaElement = ctaElement
     this.overlayElement.style.opacity = '0'
 
     document.body.append(this.overlayElement)
   }
 
-  normalizeHexColor(rawColor) {
-    const fallbackColor = '#ffffff'
-    if (typeof rawColor !== 'string') return fallbackColor
+  getDomain(url) {
+    if (typeof url !== 'string' || !url) return ''
 
-    let hexColor = rawColor.trim()
-    if (!hexColor) return fallbackColor
-    if (!hexColor.startsWith('#')) {
-      hexColor = `#${hexColor}`
-    }
-
-    if (/^#[0-9a-fA-F]{3}$/.test(hexColor)) {
-      const shortHex = hexColor.slice(1)
-      hexColor = `#${shortHex
-        .split('')
-        .map((character) => `${character}${character}`)
-        .join('')}`
-    }
-
-    if (!/^#[0-9a-fA-F]{6}$/.test(hexColor)) return fallbackColor
-    return hexColor.toLowerCase()
-  }
-
-  hexToRgb(hexColor) {
-    const normalizedColor = this.normalizeHexColor(hexColor).slice(1)
-    const red = Number.parseInt(normalizedColor.slice(0, 2), 16)
-    const green = Number.parseInt(normalizedColor.slice(2, 4), 16)
-    const blue = Number.parseInt(normalizedColor.slice(4, 6), 16)
-
-    return {
-      r: red,
-      g: green,
-      b: blue,
-    }
-  }
-
-  rgbToCmyk({ r, g, b }) {
-    const red = r / 255
-    const green = g / 255
-    const blue = b / 255
-    const black = 1 - Math.max(red, green, blue)
-
-    if (black >= 0.999) {
-      return { c: 0, m: 0, y: 0, k: 100 }
-    }
-
-    const cyan = ((1 - red - black) / (1 - black)) * 100
-    const magenta = ((1 - green - black) / (1 - black)) * 100
-    const yellow = ((1 - blue - black) / (1 - black)) * 100
-
-    return {
-      c: Math.round(cyan),
-      m: Math.round(magenta),
-      y: Math.round(yellow),
-      k: Math.round(black * 100),
-    }
-  }
-
-  buildColorSpecs(accentColor, pmsValue) {
-    const normalizedAccentColor = this.normalizeHexColor(accentColor)
-    const rgb = this.hexToRgb(normalizedAccentColor)
-    const cmyk = this.rgbToCmyk(rgb)
-
-    return {
-      chipHex: normalizedAccentColor,
-      cmyk: `${cmyk.c}, ${cmyk.m}, ${cmyk.y}, ${cmyk.k}`,
-      rgb: `${rgb.r}, ${rgb.g}, ${rgb.b}`,
-      hex: normalizedAccentColor.slice(1).toUpperCase(),
-      pms: pmsValue || 'N/A',
+    try {
+      const hostname = new URL(url).hostname
+      return hostname.replace(/^www\./, '')
+    } catch {
+      return ''
     }
   }
 
@@ -165,15 +88,17 @@ class Label {
     if (!plane || this.activePlaneIndex === planeIndex) return
 
     const labelData = plane.userData.label || {}
-    const colorSpecs = this.buildColorSpecs(plane.userData.accentColor, labelData.pms)
+    const title = labelData.title || `Project ${String(planeIndex + 1).padStart(2, '0')}`
+    const description = labelData.description || ''
+    const projectUrl = labelData.url || plane.userData.projectUrl || ''
+    const compactIndex = String(planeIndex + 1).padStart(2, '0')
 
-    this.leftIndexElement.textContent = String(planeIndex + 1).padStart(2, '0')
-    this.wordElement.textContent = labelData.word || 'tone'
-    this.chipElement.style.backgroundColor = colorSpecs.chipHex
-    this.cmykValueElement.textContent = colorSpecs.cmyk
-    this.rgbValueElement.textContent = colorSpecs.rgb
-    this.hexValueElement.textContent = colorSpecs.hex
-    this.pmsValueElement.textContent = colorSpecs.pms
+    this.ghostIndexElement.textContent = compactIndex
+    this.indexElement.textContent = `${compactIndex} / ${String(this.gallery.planes.length).padStart(2, '0')}`
+    this.titleElement.textContent = title
+    this.descriptionElement.textContent = description
+    this.domainElement.textContent = this.getDomain(projectUrl)
+    this.ctaElement.textContent = labelData.cta || 'Visit Website'
     this.overlayElement.style.color = labelData.color || ''
 
     this.activePlaneIndex = planeIndex
@@ -199,13 +124,12 @@ class Label {
   dispose() {
     this.overlayElement?.remove()
     this.overlayElement = null
-    this.leftIndexElement = null
-    this.wordElement = null
-    this.chipElement = null
-    this.cmykValueElement = null
-    this.rgbValueElement = null
-    this.hexValueElement = null
-    this.pmsValueElement = null
+    this.ghostIndexElement = null
+    this.indexElement = null
+    this.titleElement = null
+    this.descriptionElement = null
+    this.domainElement = null
+    this.ctaElement = null
     this.activePlaneIndex = -1
   }
 }
