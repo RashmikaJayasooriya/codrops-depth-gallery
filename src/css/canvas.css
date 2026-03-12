@@ -1,7 +1,6 @@
 .webgl {
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: auto;
@@ -79,135 +78,106 @@
 }
 
 .plane-label-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  pointer-events: none;
+  position: static;
+  display: block;
+  pointer-events: auto;
+  z-index: auto;
   transition: opacity 260ms ease;
-  color: rgba(244, 244, 244, 0.92);
+  color: rgba(236, 243, 255, 0.95);
 }
 
-.plane-label-overlay__left {
-  position: absolute;
-  left: clamp(2.5rem, 8vw, 12rem);
-  top: 50%;
-  transform: none;
+.project-info-card {
+  width: min(100%, 470px);
+  min-width: 0;
   display: grid;
-  gap: 0.75rem;
-}
-
-.plane-label-overlay__index {
-  margin: 0;
-  font-size: 9px;
-  opacity: 1;
-}
-
-.plane-label-overlay__chip {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
-}
-
-.plane-label-overlay__right {
-  position: absolute;
-  right: clamp(2.5rem, 7vw, 10rem);
-  top: 50%;
-  transform: none;
-}
-
-.plane-label-card {
-  width: min(28vw, 360px);
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: start;
-  pointer-events: none;
-  opacity: 1;
+  gap: 0.65rem;
+  padding: clamp(1rem, 2vw, 1.3rem);
+  border: 1px solid rgba(142, 168, 204, 0.24);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(8, 17, 34, 0.9), rgba(8, 20, 39, 0.84)),
+    radial-gradient(circle at 88% 4%, rgba(68, 128, 217, 0.24), transparent 44%);
+  box-shadow:
+    0 18px 55px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(7px);
+  pointer-events: auto;
   color: inherit;
   font-family: var(--ui-font);
-  text-transform: uppercase;
-  letter-spacing: var(--ui-tracking);
-  line-height: 1.15;
+  line-height: 1.25;
 }
 
-.plane-label-card__word {
+.project-info-card__index {
   margin: 0;
-  font-size: clamp(9px, 0.78vw, 11px);
-  white-space: nowrap;
-}
-
-.plane-label-card__specs {
-  margin: 0;
-  display: grid;
-  gap: 0.25rem;
-}
-
-.plane-label-card__row {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 3.5rem 1fr;
-  align-items: baseline;
-  gap: 0.8rem;
-}
-
-.plane-label-card__row dt,
-.plane-label-card__row dd {
-  margin: 0;
-}
-
-.plane-label-card__row dt {
   font-size: 9px;
-  opacity: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.72;
 }
 
-.plane-label-card__value {
-  font-size: clamp(9px, 0.72vw, 11px);
-  opacity: 1;
+.project-info-card__title {
+  margin: 0;
+  font-size: clamp(1.45rem, 2vw, 2.05rem);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.02;
+}
+
+.project-info-card__description {
+  margin: 0;
+  max-width: 38ch;
+  font-size: clamp(0.9rem, 0.9vw, 1rem);
+  text-transform: none;
+  letter-spacing: 0.008em;
+  line-height: 1.5;
+  color: rgba(218, 229, 248, 0.82);
+}
+
+.project-info-card__link {
+  justify-self: start;
+  margin-top: 0.3rem;
+  padding: 0.58rem 1rem;
+  border: 1px solid rgba(236, 243, 255, 0.72);
+  border-radius: 999px;
+  color: inherit;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 9px;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    opacity 180ms ease;
+}
+
+.project-info-card__link:hover,
+.project-info-card__link:focus-visible {
+  background: rgba(236, 243, 255, 0.95);
+  border-color: rgba(236, 243, 255, 0.95);
+  color: #081224;
+  outline: none;
 }
 
 @media (max-width: 53em) {
-  .plane-label-overlay {
-    inset: auto 0 max(6.25rem, env(safe-area-inset-bottom)) 0;
-    display: grid;
-    grid-template-columns: auto auto;
-    justify-content: space-between;
-    align-items: start;
-    column-gap: 1.5rem;
-    row-gap: 0.55rem;
-    padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
-  }
-
-  .plane-label-overlay__left {
-    position: static;
-    transform: none;
+  .project-info-card {
+    width: 100%;
+    border-radius: 0.95rem;
     gap: 0.5rem;
-    grid-column: 1;
-    grid-row: 2;
+    padding: 0.85rem;
   }
 
-  .plane-label-overlay__right {
-    position: static;
-    transform: none;
-    grid-column: 2;
-    grid-row: 2;
+  .project-info-card__title {
+    font-size: clamp(1.15rem, 6.7vw, 1.52rem);
   }
 
-  .plane-label-card {
-    width: auto;
-    max-width: min(58vw, 270px);
+  .project-info-card__description {
+    max-width: none;
+    font-size: 0.85rem;
   }
 
-  .plane-label-card__word {
-    font-size: 10px;
-  }
-
-  .plane-label-card__row {
-    grid-template-columns: 2.8rem 1fr;
-    gap: 0.6rem;
-  }
-
-  .plane-label-card__value {
-    font-size: 9px;
+  .project-info-card__link {
+    padding: 0.5rem 0.82rem;
+    font-size: 8.5px;
   }
 }

@@ -12,8 +12,12 @@ class Gallery {
     this.texturesBySource = new Map()
     this.useTextures = true
     this.planeGap = 5
-    this.desktopPlaneScale = 1
-    this.mobilePlaneScale = 0.65
+    this.desktopPlaneHeight = 1.02
+    this.desktopMinPlaneWidth = 0.92
+    this.desktopMaxPlaneWidth = 1.64
+    this.mobilePlaneHeight = 0.74
+    this.mobileMinPlaneWidth = 0.66
+    this.mobileMaxPlaneWidth = 1.1
     this.mobileXSpreadFactor = 0.25
     this.mobileBreakpoint = 768
     this.planeConfig = galleryPlaneData
@@ -111,6 +115,8 @@ class Gallery {
   getPlaneLabelData(planeDefinition, index) {
     const fallback = {
       word: `tone ${String(index + 1).padStart(2, '0')}`,
+      description: '',
+      url: '',
       pms: 'N/A',
       color: '',
     }
@@ -118,19 +124,33 @@ class Gallery {
 
     return {
       word: label.word || fallback.word,
+      description: label.description || fallback.description,
+      url: label.url || fallback.url,
       pms: label.pms || fallback.pms,
       color: label.color || fallback.color,
     }
   }
 
   updatePlaneScale() {
-    const isMobileViewport = window.innerWidth <= this.mobileBreakpoint
-    const scale = isMobileViewport ? this.mobilePlaneScale : this.desktopPlaneScale
-
     this.planes.forEach((plane) => {
       const aspectRatio = plane.userData.aspectRatio || 1
-      plane.scale.set(scale * aspectRatio, scale, 1)
+      const { width, height } = this.getPlaneDimensions(aspectRatio)
+      plane.scale.set(width, height, 1)
     })
+  }
+
+  getPlaneDimensions(aspectRatio = 1) {
+    const isMobileViewport = window.innerWidth <= this.mobileBreakpoint
+    const planeHeight = isMobileViewport ? this.mobilePlaneHeight : this.desktopPlaneHeight
+    const minWidth = isMobileViewport ? this.mobileMinPlaneWidth : this.desktopMinPlaneWidth
+    const maxWidth = isMobileViewport ? this.mobileMaxPlaneWidth : this.desktopMaxPlaneWidth
+    const naturalWidth = planeHeight * aspectRatio
+    const planeWidth = THREE.MathUtils.clamp(naturalWidth, minWidth, maxWidth)
+
+    return {
+      width: planeWidth,
+      height: planeHeight,
+    }
   }
 
   layoutPlanes() {
@@ -495,11 +515,10 @@ class Gallery {
       plane.rotation.z = 0
 
       const aspectRatio = plane.userData.aspectRatio || 1
-      const baseScale =
-        window.innerWidth <= this.mobileBreakpoint ? this.mobilePlaneScale : this.desktopPlaneScale
+      const { width, height } = this.getPlaneDimensions(aspectRatio)
       const scalePulse = 1 + this.breathScaleAmount * breathInfluence
-      plane.scale.x = baseScale * aspectRatio * scalePulse
-      plane.scale.y = baseScale * scalePulse
+      plane.scale.x = width * scalePulse
+      plane.scale.y = height * scalePulse
       plane.scale.z = 1
     })
   }

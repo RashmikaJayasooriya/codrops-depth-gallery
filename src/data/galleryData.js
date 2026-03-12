@@ -182,6 +182,8 @@ const galleryPlaneData = portfolioProjects.map((project, index) => {
     blob2Color: mixHex(backgroundColor, '#000000', 0.15),
     label: {
       word: project.title,
+      description: project.description,
+      url: project.url,
       pms: project.id,
       color: getContrastText(backgroundColor),
     },
