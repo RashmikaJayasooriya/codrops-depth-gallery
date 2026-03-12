@@ -10,25 +10,25 @@ A Three.js depth-scrolling image gallery where scroll velocity drives atmospheri
 
 ## Installation
 
-```
+```bash
 npm install
 npm run dev
 ```
 
-For production build:
+For a production build:
 
-```
+```bash
 npm run build
-npm run preview
+npm run start
 ```
 
 ## Tech Stack
 
 - Node.js >= 18
-- [Vite](https://vite.dev/)
-- [Three.js](https://threejs.org/)￼
+- [Next.js](https://nextjs.org/)
+- [Three.js](https://threejs.org/)
 - Vanilla JavaScript (ES Modules)
-- GLSL (via vite-plugin-glsl)
+- GLSL shaders (loaded via Next webpack `asset/source`)
 
 ## Credits
 

@@ -22,7 +22,7 @@ class Experience {
   }
 
   async init(scene, camera) {
-    if (this.isInitialized) return
+    if (this.isInitialized || this.isDisposed) return
 
     await this.gallery.init(scene)
     this.label.init()
@@ -97,9 +97,11 @@ class Experience {
     this.gallery.dispose()
     this.label.dispose()
     this.background.dispose()
+    this.debug.dispose()
+
+    this.isInitialized = false
     this.isDisposed = true
   }
 }
 
-const world = new Experience()
-export { Experience, world }
+export { Experience }

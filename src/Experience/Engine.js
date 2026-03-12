@@ -1,10 +1,10 @@
 import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
-import { world } from '@/Experience/'
+import { Experience } from '@/Experience/'
 import { Scroll } from '@/Experience/Scroll'
 
 class Engine {
-  constructor(canvas, experience = world) {
+  constructor(canvas, experience = new Experience()) {
     if (!(canvas instanceof HTMLCanvasElement)) {
       throw new Error('Engine requires a valid canvas element')
     }
@@ -15,6 +15,7 @@ class Engine {
     this.debug = this.experience.debug
     this.isInitialized = false
     this.isRunning = false
+    this.isDisposed = false
     this.isDebugBound = false
     this.animationFrameRequestId = null
     this.preloadedTextures = new Map()
@@ -52,15 +53,17 @@ class Engine {
   }
 
   async init() {
-    if (this.isInitialized) return
+    if (this.isInitialized || this.isDisposed) return
 
     document.body.classList.add('loading')
 
     try {
       this.preloadedTextures = await this.preloadTextures()
+      if (this.isDisposed) return
       this.experience.gallery.setPreloadedTextures(this.preloadedTextures)
 
       await this.experience.init(this.scene, this.camera)
+      if (this.isDisposed) return
       this.scroll.init()
       this.initStats()
       this.bindDebug()
@@ -79,7 +82,7 @@ class Engine {
   }
 
   start() {
-    if (!this.isInitialized || this.isRunning) return
+    if (!this.isInitialized || this.isRunning || this.isDisposed) return
 
     this.isRunning = true
     this.update()
@@ -179,6 +182,8 @@ class Engine {
   }
 
   dispose() {
+    if (this.isDisposed) return
+    this.isDisposed = true
     this.isRunning = false
 
     if (this.animationFrameRequestId !== null) {
